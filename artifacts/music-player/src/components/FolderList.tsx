@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Trash2, Music } from "lucide-react";
-import { usePlayer, type Folder, type Track } from "@/context/PlayerContext";
+import { usePlayer, type Folder } from "@/context/PlayerContext";
+import AnimatedList from "@/components/AnimatedList/AnimatedList";
 
 interface FolderItemProps {
   folder: Folder;
@@ -8,16 +9,21 @@ interface FolderItemProps {
 
 function FolderItem({ folder }: FolderItemProps) {
   const [open, setOpen] = useState(true);
-  const { playTrack, currentTrack, isPlaying, removeFolder } = usePlayer();
+  const { playTrack, currentTrack, removeFolder } = usePlayer();
 
-  const handleTrackClick = (track: Track) => {
-    playTrack(track);
+  const trackNames = folder.tracks.map((t) => t.name);
+
+  const activeIndex = folder.tracks.findIndex((t) => t.id === currentTrack?.id);
+
+  const handleSelect = (_item: string, index: number) => {
+    const track = folder.tracks[index];
+    if (track) playTrack(track);
   };
 
   return (
     <div className="mb-3" data-testid={`folder-${folder.id}`}>
       {/* Folder header */}
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-2">
         <button
           onClick={() => setOpen((v) => !v)}
           data-testid={`button-toggle-folder-${folder.id}`}
@@ -52,38 +58,21 @@ function FolderItem({ folder }: FolderItemProps) {
         </button>
       </div>
 
-      {/* Track list */}
+      {/* Animated track list */}
       {open && (
-        <div className="ml-2 flex flex-col gap-0.5">
+        <div className="ml-2">
           {folder.tracks.length === 0 ? (
             <div className="py-3 px-3 text-xs text-muted-foreground">No audio files.</div>
           ) : (
-            folder.tracks.map((track) => {
-              const isActive = currentTrack?.id === track.id;
-              return (
-                <button
-                  key={track.id}
-                  onClick={() => handleTrackClick(track)}
-                  data-testid={`track-item-${track.id}`}
-                  className={`
-                    track-item w-full text-left px-3 py-2.5 rounded-lg text-sm
-                    flex items-center gap-2
-                    ${isActive
-                      ? "bg-primary/15 text-primary font-medium"
-                      : "text-foreground hover:bg-accent/40"
-                    }
-                  `}
-                >
-                  {isActive && (
-                    <Music
-                      size={13}
-                      className={`flex-shrink-0 ${isPlaying ? "animate-pulse" : ""}`}
-                    />
-                  )}
-                  <span className="truncate">{track.name}</span>
-                </button>
-              );
-            })
+            <AnimatedList
+              items={trackNames}
+              onItemSelect={handleSelect}
+              activeIndex={activeIndex}
+              showGradients={folder.tracks.length > 7}
+              enableArrowNavigation={false}
+              displayScrollbar={false}
+              initialSelectedIndex={activeIndex}
+            />
           )}
         </div>
       )}
