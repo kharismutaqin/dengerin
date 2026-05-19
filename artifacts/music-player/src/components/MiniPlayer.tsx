@@ -4,6 +4,13 @@ import { usePlayer } from "@/context/PlayerContext";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
+function formatTime(secs: number): string {
+  if (!isFinite(secs) || isNaN(secs)) return "0:00";
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 function SpeedMenu({
   onClose,
   anchorRef,
@@ -54,6 +61,7 @@ function SpeedMenu({
         </button>
       </div>
 
+      {/* Speed */}
       <div className="mb-3">
         <p className="text-xs text-muted-foreground mb-2">Speed</p>
         <div className="grid grid-cols-4 gap-1">
@@ -76,6 +84,7 @@ function SpeedMenu({
         </div>
       </div>
 
+      {/* Pitch toggle */}
       <div className="border-t border-border pt-3">
         <button
           onClick={() => setPreservesPitch(!preservesPitch)}
@@ -115,6 +124,78 @@ function SpeedMenu({
   );
 }
 
+function SeekBar() {
+  const { currentTime, duration, seek } = usePlayer();
+  const [dragging, setDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
+
+  const displayTime = dragging ? dragValue : currentTime;
+  const progress = duration > 0 ? displayTime / duration : 0;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDragValue(Number(e.target.value));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
+    setDragging(true);
+    setDragValue(Number((e.target as HTMLInputElement).value));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLInputElement>) => {
+    setDragging(true);
+    setDragValue(Number((e.target as HTMLInputElement).value));
+  };
+
+  const commitSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const t = Number(e.target.value);
+    seek(t);
+    setDragging(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-2" data-testid="seek-bar-container">
+      <span className="text-xs text-muted-foreground tabular-nums w-8 flex-shrink-0">
+        {formatTime(displayTime)}
+      </span>
+
+      <div className="relative flex-1 h-1 group">
+        {/* Track background */}
+        <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
+          {/* Filled portion */}
+          <div
+            className="h-full bg-primary rounded-full transition-none"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+        {/* Range input (transparent, sits on top) */}
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.1}
+          value={dragging ? dragValue : currentTime}
+          onChange={handleChange}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onMouseUp={commitSeek}
+          onTouchEnd={commitSeek}
+          disabled={duration === 0}
+          data-testid="input-seekbar"
+          className="
+            absolute inset-0 w-full opacity-0 cursor-pointer
+            disabled:cursor-default
+          "
+          style={{ height: "100%" }}
+        />
+      </div>
+
+      <span className="text-xs text-muted-foreground tabular-nums w-8 flex-shrink-0 text-right">
+        {formatTime(duration)}
+      </span>
+    </div>
+  );
+}
+
 export function MiniPlayer() {
   const { currentTrack, isPlaying, togglePlay, audioError } = usePlayer();
   const [showSettings, setShowSettings] = useState(false);
@@ -132,7 +213,7 @@ export function MiniPlayer() {
           relative max-w-lg mx-auto
           rounded-2xl border border-border/80
           bg-card/85 backdrop-blur-xl
-          shadow-2xl px-4 py-3
+          shadow-2xl px-4 pt-3 pb-3
         "
       >
         {/* Error banner */}
@@ -147,19 +228,13 @@ export function MiniPlayer() {
         )}
 
         <div className="flex items-center gap-3">
-          {/* Track info */}
+          {/* Track info — only title, no folder name */}
           <div className="flex-1 min-w-0">
             <p
               className="text-sm font-medium text-foreground truncate"
               data-testid="text-current-track"
             >
               {currentTrack.name}
-            </p>
-            <p
-              className="text-xs text-muted-foreground truncate mt-0.5"
-              data-testid="text-current-folder"
-            >
-              {currentTrack.folderName}
             </p>
           </div>
 
@@ -174,8 +249,8 @@ export function MiniPlayer() {
                 w-10 h-10 rounded-full
                 bg-primary text-primary-foreground
                 flex items-center justify-center
-                press-scale hover:opacity-90
-                shadow-md disabled:opacity-40
+                press-scale hover:opacity-90 shadow-md
+                disabled:opacity-40
               "
               aria-label={isPlaying ? "Pause" : "Play"}
             >
@@ -209,6 +284,9 @@ export function MiniPlayer() {
             </div>
           </div>
         </div>
+
+        {/* Seek bar — below track title */}
+        <SeekBar />
       </div>
     </div>
   );

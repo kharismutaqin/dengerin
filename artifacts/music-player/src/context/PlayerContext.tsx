@@ -16,20 +16,20 @@ export interface Folder {
   fetchedAt: number;
 }
 
-interface PlayerState {
+interface PlayerContextType {
   currentTrack: Track | null;
   isPlaying: boolean;
   playbackRate: number;
   preservesPitch: boolean;
   audioError: string | null;
-}
-
-interface PlayerContextType extends PlayerState {
+  currentTime: number;
+  duration: number;
   folders: Folder[];
   playTrack: (track: Track) => void;
   togglePlay: () => void;
   setPlaybackRate: (rate: number) => void;
   setPreservesPitch: (v: boolean) => void;
+  seek: (time: number) => void;
   addFolder: (folder: Folder) => void;
   removeFolder: (folderId: string) => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -41,7 +41,6 @@ const STORAGE_KEY = "mp-folders";
 const API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY as string;
 
 function buildAudioUrl(fileId: string): string {
-  // Drive API alt=media — streams public files correctly with proper CORS headers
   return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
 }
 
@@ -52,6 +51,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [playbackRate, setPlaybackRateState] = useState(1);
   const [preservesPitch, setPreservesPitchState] = useState(true);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  // Store latest rate/pitch in refs so event handlers always see current values
+  const playbackRateRef = useRef(1);
+  const preservesPitchRef = useRef(true);
+
   const [folders, setFolders] = useState<Folder[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -66,35 +72,50 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(folders));
   }, [folders]);
 
-  // Sync playback rate & pitch
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.playbackRate = playbackRate;
-    audio.preservesPitch = preservesPitch;
-  }, [playbackRate, preservesPitch]);
-
-  // Audio event listeners
+  // Wire up all audio event listeners once
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const handleEnded = () => setIsPlaying(false);
+
     const handleError = () => {
       setIsPlaying(false);
       setAudioError(
         "Could not play this file. Make sure the Google Drive folder is shared publicly (\"Anyone with the link\")."
       );
     };
-    const handleCanPlay = () => setAudioError(null);
+
+    // Re-apply rate & pitch every time audio is ready to play.
+    // This is the key fix: browsers reset playbackRate to 1 after src/load changes.
+    const handleCanPlay = () => {
+      setAudioError(null);
+      audio.playbackRate = playbackRateRef.current;
+      audio.preservesPitch = preservesPitchRef.current;
+    };
+
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+      setCurrentTime(0);
+      // Also apply here for browsers that fire loadedmetadata before canplay
+      audio.playbackRate = playbackRateRef.current;
+      audio.preservesPitch = preservesPitchRef.current;
+    };
 
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
     audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+
     return () => {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
       audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, []);
 
@@ -102,18 +123,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
     setAudioError(null);
-    const url = buildAudioUrl(track.fileId);
-    audio.src = url;
-    audio.playbackRate = playbackRate;
-    audio.preservesPitch = preservesPitch;
-    audio.load();
+    setCurrentTime(0);
+    setDuration(0);
+    // Setting src triggers load automatically — no need to call audio.load()
+    // Rate/pitch will be re-applied in the canplay / loadedmetadata handlers
+    audio.src = buildAudioUrl(track.fileId);
     audio.play().catch((err) => {
       console.error("Audio play error:", err);
       setIsPlaying(false);
     });
     setCurrentTrack(track);
     setIsPlaying(true);
-  }, [playbackRate, preservesPitch]);
+  }, []);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -132,13 +153,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [isPlaying, currentTrack]);
 
   const setPlaybackRate = useCallback((rate: number) => {
+    playbackRateRef.current = rate;
     setPlaybackRateState(rate);
     if (audioRef.current) audioRef.current.playbackRate = rate;
   }, []);
 
   const setPreservesPitch = useCallback((v: boolean) => {
+    preservesPitchRef.current = v;
     setPreservesPitchState(v);
     if (audioRef.current) audioRef.current.preservesPitch = v;
+  }, []);
+
+  const seek = useCallback((time: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = time;
+    setCurrentTime(time);
   }, []);
 
   const addFolder = useCallback((folder: Folder) => {
@@ -156,6 +186,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrentTrack(null);
       setIsPlaying(false);
       setAudioError(null);
+      setCurrentTime(0);
+      setDuration(0);
     }
   }, [currentTrack]);
 
@@ -166,11 +198,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       playbackRate,
       preservesPitch,
       audioError,
+      currentTime,
+      duration,
       folders,
       playTrack,
       togglePlay,
       setPlaybackRate,
       setPreservesPitch,
+      seek,
       addFolder,
       removeFolder,
       audioRef,
