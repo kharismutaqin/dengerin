@@ -40,20 +40,16 @@ function SpeedMenu({
   return (
     <div
       ref={menuRef}
-      className="
-        absolute bottom-full mb-3 right-0 w-56 z-50
-        animate-in fade-in slide-in-from-bottom-2 duration-150
-      "
+      className="absolute bottom-full right-0 mb-3 w-56 z-[60] origin-bottom-right animate-in fade-in slide-in-from-bottom-2 duration-150"
       data-testid="settings-menu"
     >
-      {/* Settings menu also uses GlassSurface */}
       <GlassSurface
         width="100%"
         height="auto"
         borderRadius={16}
         backgroundOpacity={0.08}
         saturation={1.4}
-        distortionScale={-140}
+        distortionScale={-120}
         className="w-full"
         style={{ padding: 0 }}
       >
@@ -71,7 +67,6 @@ function SpeedMenu({
             </button>
           </div>
 
-          {/* Speed */}
           <div className="mb-3">
             <p className="text-xs text-muted-foreground mb-2">Speed</p>
             <div className="grid grid-cols-4 gap-1">
@@ -94,7 +89,6 @@ function SpeedMenu({
             </div>
           </div>
 
-          {/* Pitch toggle */}
           <div className="border-t border-border/60 pt-3">
             <button
               onClick={() => setPreservesPitch(!preservesPitch)}
@@ -209,10 +203,7 @@ export function MiniPlayer() {
   if (!currentTrack) return null;
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-5 pt-2"
-      data-testid="mini-player"
-    >
+    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-5 pt-2" data-testid="mini-player">
       <div className="relative max-w-lg mx-auto">
         <GlassSurface
           width="100%"
@@ -227,7 +218,6 @@ export function MiniPlayer() {
           style={{ padding: 0 }}
         >
           <div className="w-full px-4 pt-3 pb-3">
-            {/* Error banner */}
             {audioError && (
               <div
                 className="flex items-start gap-2 mb-3 px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20"
@@ -239,19 +229,13 @@ export function MiniPlayer() {
             )}
 
             <div className="flex items-center gap-3">
-              {/* Track title only */}
               <div className="flex-1 min-w-0">
-                <p
-                  className="text-sm font-medium text-foreground truncate"
-                  data-testid="text-current-track"
-                >
+                <p className="text-sm font-medium text-foreground truncate" data-testid="text-current-track">
                   {currentTrack.name}
                 </p>
               </div>
 
-              {/* Controls */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Play/Pause */}
                 <button
                   onClick={togglePlay}
                   data-testid="button-play-pause"
@@ -268,7 +252,6 @@ export function MiniPlayer() {
                   {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
                 </button>
 
-                {/* Settings */}
                 <div className="relative">
                   <button
                     ref={settingsBtnRef}
@@ -296,7 +279,6 @@ export function MiniPlayer() {
               </div>
             </div>
 
-            {/* Seek bar */}
             <SeekBar />
           </div>
         </GlassSurface>
