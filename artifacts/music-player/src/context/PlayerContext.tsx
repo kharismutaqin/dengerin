@@ -21,6 +21,7 @@ interface PlayerState {
   isPlaying: boolean;
   playbackRate: number;
   preservesPitch: boolean;
+  audioError: string | null;
 }
 
 interface PlayerContextType extends PlayerState {
@@ -37,9 +38,11 @@ interface PlayerContextType extends PlayerState {
 const PlayerContext = createContext<PlayerContextType | null>(null);
 
 const STORAGE_KEY = "mp-folders";
+const API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY as string;
 
 function buildAudioUrl(fileId: string): string {
-  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+  // Drive API alt=media — streams public files correctly with proper CORS headers
+  return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
 }
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
@@ -48,6 +51,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1);
   const [preservesPitch, setPreservesPitchState] = useState(true);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [folders, setFolders] = useState<Folder[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -70,14 +74,43 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     audio.preservesPitch = preservesPitch;
   }, [playbackRate, preservesPitch]);
 
+  // Audio event listeners
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => setIsPlaying(false);
+    const handleError = () => {
+      setIsPlaying(false);
+      setAudioError(
+        "Could not play this file. Make sure the Google Drive folder is shared publicly (\"Anyone with the link\")."
+      );
+    };
+    const handleCanPlay = () => setAudioError(null);
+
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
+    audio.addEventListener("canplay", handleCanPlay);
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
+      audio.removeEventListener("canplay", handleCanPlay);
+    };
+  }, []);
+
   const playTrack = useCallback((track: Track) => {
     const audio = audioRef.current;
     if (!audio) return;
+    setAudioError(null);
     const url = buildAudioUrl(track.fileId);
     audio.src = url;
     audio.playbackRate = playbackRate;
     audio.preservesPitch = preservesPitch;
-    audio.play().catch(() => {});
+    audio.load();
+    audio.play().catch((err) => {
+      console.error("Audio play error:", err);
+      setIsPlaying(false);
+    });
     setCurrentTrack(track);
     setIsPlaying(true);
   }, [playbackRate, preservesPitch]);
@@ -89,31 +122,29 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play().catch(() => {});
+      setAudioError(null);
+      audio.play().catch((err) => {
+        console.error("Audio play error:", err);
+        setIsPlaying(false);
+      });
       setIsPlaying(true);
     }
   }, [isPlaying, currentTrack]);
 
   const setPlaybackRate = useCallback((rate: number) => {
     setPlaybackRateState(rate);
-    if (audioRef.current) {
-      audioRef.current.playbackRate = rate;
-    }
+    if (audioRef.current) audioRef.current.playbackRate = rate;
   }, []);
 
   const setPreservesPitch = useCallback((v: boolean) => {
     setPreservesPitchState(v);
-    if (audioRef.current) {
-      audioRef.current.preservesPitch = v;
-    }
+    if (audioRef.current) audioRef.current.preservesPitch = v;
   }, []);
 
   const addFolder = useCallback((folder: Folder) => {
     setFolders((prev) => {
       const exists = prev.find((f) => f.id === folder.id);
-      if (exists) {
-        return prev.map((f) => (f.id === folder.id ? folder : f));
-      }
+      if (exists) return prev.map((f) => (f.id === folder.id ? folder : f));
       return [...prev, folder];
     });
   }, []);
@@ -124,17 +155,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audioRef.current?.pause();
       setCurrentTrack(null);
       setIsPlaying(false);
+      setAudioError(null);
     }
   }, [currentTrack]);
-
-  // Listen for audio end
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const handleEnded = () => setIsPlaying(false);
-    audio.addEventListener("ended", handleEnded);
-    return () => audio.removeEventListener("ended", handleEnded);
-  }, []);
 
   return (
     <PlayerContext.Provider value={{
@@ -142,6 +165,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       isPlaying,
       playbackRate,
       preservesPitch,
+      audioError,
       folders,
       playTrack,
       togglePlay,
@@ -151,8 +175,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       removeFolder,
       audioRef,
     }}>
-      {/* Hidden audio element */}
-      <audio ref={audioRef} />
+      <audio ref={audioRef} preload="auto" crossOrigin="anonymous" />
       {children}
     </PlayerContext.Provider>
   );
