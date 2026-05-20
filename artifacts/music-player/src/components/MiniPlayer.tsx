@@ -18,7 +18,8 @@ function SpeedMenu({
   onClose: () => void;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
 }) {
-  const { playbackRate, setPlaybackRate, preservesPitch, setPreservesPitch } = usePlayer();
+  const { playbackRate, setPlaybackRate, preservesPitch, setPreservesPitch } =
+    usePlayer();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ function SpeedMenu({
     >
       <div className="w-full rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-3">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+          <span className="text-xs font-semibold text-foreground tracking-wider">
             Playback Settings
           </span>
           <button
@@ -66,9 +67,10 @@ function SpeedMenu({
                 data-testid={`button-speed-${rate}`}
                 className={`
                   py-1.5 rounded-lg text-xs font-medium press-scale
-                  ${playbackRate === rate
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ${
+                    playbackRate === rate
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/60 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   }
                 `}
               >
@@ -85,9 +87,13 @@ function SpeedMenu({
             className="w-full flex items-center justify-between px-1 press-scale"
           >
             <div>
-              <p className="text-xs font-medium text-foreground text-left">Pitch Adjustment</p>
+              <p className="text-xs font-medium text-foreground text-left">
+                Pitch Adjustment
+              </p>
               <p className="text-xs text-muted-foreground text-left mt-0.5">
-                {preservesPitch ? "Pitch stays normal" : "Pitch shifts with speed"}
+                {preservesPitch
+                  ? "Pitch stays normal"
+                  : "Pitch shifts with speed"}
               </p>
             </div>
             <div
@@ -108,9 +114,7 @@ function SpeedMenu({
             </div>
           </button>
           {!preservesPitch && (
-            <p className="text-xs text-primary/80 mt-1.5 px-1">
-              Pitch shifts up/down with speed changes
-            </p>
+            <p className="text-xs text-primary/80 mt-1.5 px-1"></p>
           )}
         </div>
       </div>
@@ -146,7 +150,10 @@ function SeekBar() {
   };
 
   return (
-    <div className="flex items-center gap-2 mt-2.5" data-testid="seek-bar-container">
+    <div
+      className="flex items-center gap-2 mt-2.5"
+      data-testid="seek-bar-container"
+    >
       <span className="text-xs text-muted-foreground tabular-nums w-8 flex-shrink-0">
         {formatTime(displayTime)}
       </span>
@@ -191,21 +198,32 @@ export function MiniPlayer() {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-5 pt-2" data-testid="mini-player">
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-5 pt-2"
+      data-testid="mini-player"
+    >
       <div className="relative max-w-lg mx-auto rounded-2xl border border-border bg-card/90 backdrop-blur-xl shadow-2xl px-4 pt-3 pb-3">
         {audioError && (
           <div
             className="flex items-start gap-2 mb-3 px-3 py-2 rounded-xl bg-destructive/10 border border-destructive/20"
             data-testid="text-audio-error"
           >
-            <AlertCircle size={13} className="text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-destructive leading-snug">{audioError}</p>
+            <AlertCircle
+              size={13}
+              className="text-destructive flex-shrink-0 mt-0.5"
+            />
+            <p className="text-xs text-destructive leading-snug">
+              {audioError}
+            </p>
           </div>
         )}
 
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate" data-testid="text-current-track">
+            <p
+              className="text-sm font-medium text-foreground truncate"
+              data-testid="text-current-track"
+            >
               {currentTrack.name}
             </p>
           </div>
@@ -224,7 +242,11 @@ export function MiniPlayer() {
               "
               aria-label={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+              {isPlaying ? (
+                <Pause size={18} />
+              ) : (
+                <Play size={18} className="ml-0.5" />
+              )}
             </button>
 
             <div className="relative">
@@ -234,9 +256,10 @@ export function MiniPlayer() {
                 data-testid="button-settings"
                 className={`
                   w-9 h-9 rounded-full flex items-center justify-center press-scale
-                  ${showSettings
-                    ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+                  ${
+                    showSettings
+                      ? "bg-primary/20 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/10"
                   }
                 `}
                 aria-label="Playback settings"
