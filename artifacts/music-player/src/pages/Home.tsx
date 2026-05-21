@@ -29,11 +29,8 @@ export function Home() {
             />
             <div>
               <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                Music
+                G Player
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Google Drive Player
-              </p>
             </div>
           </div>
           <ThemeToggle />
