@@ -218,7 +218,8 @@ export function MiniPlayer() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 flex-col">
+        <div className="flex items-center gap-3">
+          {/* Left: track name */}
           <div className="flex-1 min-w-0">
             <p
               className="text-sm font-medium text-foreground truncate"
@@ -228,7 +229,8 @@ export function MiniPlayer() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 flex-row">
+          {/* Center: prev, play, next */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={playPrevious}
               disabled={!!audioError}
@@ -278,8 +280,11 @@ export function MiniPlayer() {
             >
               <SkipForward size={18} />
             </button>
+          </div>
 
-            <div className="relative pt-[0px] pb-[0px] pl-[0px] pr-[0px]">
+          {/* Right: settings */}
+          <div className="flex-1 flex justify-end">
+            <div className="relative">
               <button
                 ref={settingsBtnRef}
                 onClick={() => setShowSettings((v) => !v)}
