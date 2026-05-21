@@ -218,16 +218,17 @@ export function MiniPlayer() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          {/* Left: track name */}
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-sm font-medium text-foreground truncate"
-              data-testid="text-current-track"
-            >
-              {currentTrack.name}
-            </p>
-          </div>
+        {/* Track title */}
+        <p
+          className="text-sm font-medium text-foreground truncate text-center"
+          data-testid="text-current-track"
+        >
+          {currentTrack.name}
+        </p>
+
+        <div className="flex items-center gap-3 mt-2.5">
+          {/* Spacer to balance settings */}
+          <div className="flex-1" />
 
           {/* Center: prev, play, next */}
           <div className="flex items-center gap-2 flex-shrink-0">
