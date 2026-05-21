@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Settings, X, AlertCircle } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Settings, X, AlertCircle } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -191,7 +191,7 @@ function SeekBar() {
 }
 
 export function MiniPlayer() {
-  const { currentTrack, isPlaying, togglePlay, audioError } = usePlayer();
+  const { currentTrack, isPlaying, togglePlay, playNext, playPrevious, audioError } = usePlayer();
   const [showSettings, setShowSettings] = useState(false);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -230,6 +230,21 @@ export function MiniPlayer() {
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
+              onClick={playPrevious}
+              disabled={!!audioError}
+              className="
+                w-9 h-9 rounded-full
+                text-muted-foreground hover:text-foreground
+                flex items-center justify-center
+                press-scale hover:opacity-90
+                disabled:opacity-40
+              "
+              aria-label="Previous track"
+            >
+              <SkipBack size={18} />
+            </button>
+
+            <button
               onClick={togglePlay}
               data-testid="button-play-pause"
               disabled={!!audioError}
@@ -247,6 +262,21 @@ export function MiniPlayer() {
               ) : (
                 <Play size={18} className="ml-0.5" />
               )}
+            </button>
+
+            <button
+              onClick={playNext}
+              disabled={!!audioError}
+              className="
+                w-9 h-9 rounded-full
+                text-muted-foreground hover:text-foreground
+                flex items-center justify-center
+                press-scale hover:opacity-90
+                disabled:opacity-40
+              "
+              aria-label="Next track"
+            >
+              <SkipForward size={18} />
             </button>
 
             <div className="relative">

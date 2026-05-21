@@ -26,6 +26,8 @@ interface PlayerContextType {
   duration: number;
   folders: Folder[];
   playTrack: (track: Track) => void;
+  playNext: () => void;
+  playPrevious: () => void;
   togglePlay: () => void;
   setPlaybackRate: (rate: number) => void;
   setPreservesPitch: (v: boolean) => void;
@@ -58,6 +60,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const playbackRateRef = useRef(1);
   const preservesPitchRef = useRef(true);
 
+  // Refs for stale-closure-safe event handlers
+  const currentTrackRef = useRef<Track | null>(null);
+  const foldersRef = useRef<Folder[]>([]);
+  const playTrackRef = useRef<(track: Track) => void>(() => {});
+
   const [folders, setFolders] = useState<Folder[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -66,6 +73,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       return [];
     }
   });
+
+  // Keep refs in sync with latest state
+  useEffect(() => {
+    currentTrackRef.current = currentTrack;
+  }, [currentTrack]);
+
+  useEffect(() => {
+    foldersRef.current = folders;
+  }, [folders]);
 
   // Persist folders
   useEffect(() => {
@@ -77,7 +93,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      const track = currentTrackRef.current;
+      if (!track) {
+        setIsPlaying(false);
+        return;
+      }
+      const folder = foldersRef.current.find((f) => f.id === track.folderId);
+      if (!folder) {
+        setIsPlaying(false);
+        return;
+      }
+      const currentIndex = folder.tracks.findIndex((t) => t.id === track.id);
+      const nextTrack = folder.tracks[currentIndex + 1];
+      if (nextTrack) {
+        playTrackRef.current(nextTrack);
+      } else {
+        setIsPlaying(false);
+      }
+    };
 
     const handleError = () => {
       setIsPlaying(false);
@@ -135,6 +169,30 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setCurrentTrack(track);
     setIsPlaying(true);
   }, []);
+
+  useEffect(() => {
+    playTrackRef.current = playTrack;
+  }, [playTrack]);
+
+  const playNext = useCallback(() => {
+    const track = currentTrack;
+    if (!track) return;
+    const folder = folders.find((f) => f.id === track.folderId);
+    if (!folder) return;
+    const currentIndex = folder.tracks.findIndex((t) => t.id === track.id);
+    const nextTrack = folder.tracks[currentIndex + 1];
+    if (nextTrack) playTrack(nextTrack);
+  }, [currentTrack, folders, playTrack]);
+
+  const playPrevious = useCallback(() => {
+    const track = currentTrack;
+    if (!track) return;
+    const folder = folders.find((f) => f.id === track.folderId);
+    if (!folder) return;
+    const currentIndex = folder.tracks.findIndex((t) => t.id === track.id);
+    const prevTrack = folder.tracks[currentIndex - 1];
+    if (prevTrack) playTrack(prevTrack);
+  }, [currentTrack, folders, playTrack]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -202,6 +260,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       duration,
       folders,
       playTrack,
+      playNext,
+      playPrevious,
       togglePlay,
       setPlaybackRate,
       setPreservesPitch,
