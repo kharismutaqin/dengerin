@@ -144,8 +144,8 @@ function SeekBar() {
     setDragValue(Number((e.target as HTMLInputElement).value));
   };
 
-  const commitSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    seek(Number(e.target.value));
+  const commitSeek = () => {
+    seek(dragValue);
     setDragging(false);
   };
 
