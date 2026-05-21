@@ -20,13 +20,21 @@ export function Home() {
       >
         {/* Header */}
         <header className="flex items-center justify-between px-5 pt-6 pb-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">
-              Music
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Google Drive Player
-            </p>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={`${import.meta.env.BASE_URL}favicon.svg`}
+              alt=""
+              className="w-6 h-6"
+              style={{ filter: "drop-shadow(0 0 4px rgba(150,102,227,0.4))" }}
+            />
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight text-foreground">
+                Music
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Google Drive Player
+              </p>
+            </div>
           </div>
           <ThemeToggle />
         </header>
