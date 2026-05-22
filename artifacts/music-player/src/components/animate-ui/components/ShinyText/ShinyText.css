@@ -1,0 +1,21 @@
+.animated-gradient-text {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-content {
+  display: inline-block;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 600;
+}
+
+/* Style untuk logo gradient */
+.icon-content {
+  width: 1.5rem; /* Sama dengan w-6 (24px) */
+  height: 1.5rem; /* Sama dengan h-6 (24px) */
+  display: inline-block;
+}

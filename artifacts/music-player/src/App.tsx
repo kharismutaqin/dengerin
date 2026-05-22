@@ -3,6 +3,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { PlayerProvider } from "@/context/PlayerContext";
 import { Home } from "@/pages/Home";
 import { Toaster } from "@/components/ui/toaster";
+import { ClickSpark } from "@/components/animate-ui/components/ClickSpark";
 
 function NotFound() {
   return (
@@ -25,9 +26,18 @@ function App() {
   return (
     <ThemeProvider>
       <PlayerProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        {/* ClickSpark membungkus Router agar efek bisa muncul di mana saja */}
+        <ClickSpark
+          sparkColor="#a855f7"
+          sparkSize={10}
+          sparkRadius={15}
+          sparkCount={8}
+          duration={400}
+        >
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        </ClickSpark>
         <Toaster />
       </PlayerProvider>
     </ThemeProvider>

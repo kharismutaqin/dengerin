@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Settings, X, AlertCircle } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Settings, X, AlertCircle, RotateCcw, RotateCw } from "lucide-react";
 import { usePlayer } from "@/context/PlayerContext";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -58,7 +58,7 @@ function SpeedMenu({
         </div>
 
         <div className="mb-3">
-          <p className="text-xs text-muted-foreground mb-2">Speed</p>
+          <p className="text-xs font-medium text-foreground text-left mb-2">Speed</p>
           <div className="grid grid-cols-4 gap-1">
             {SPEED_OPTIONS.map((rate) => (
               <button
@@ -81,34 +81,31 @@ function SpeedMenu({
         </div>
 
         <div className="border-t border-border/60 pt-3">
+          {/* Hapus class 'press-scale' dari sini agar tidak seluruh elemen mental/bounce */}
           <button
             onClick={() => setPreservesPitch(!preservesPitch)}
             data-testid="button-toggle-pitch"
-            className="w-full flex items-center justify-between px-1 press-scale"
+            className="w-full flex items-center justify-between px-1 hover:bg-white/5 rounded-lg py-1 transition-colors"
           >
             <div>
               <p className="text-xs font-medium text-foreground text-left">
                 Pitch Adjustment
               </p>
-              <p className="text-xs text-muted-foreground text-left mt-0.5">
-                {preservesPitch
-                  ? "Pitch stays normal"
-                  : "Pitch shifts with speed"}
-              </p>
             </div>
+
+            {/* Toggle Switch */}
             <div
               className={`
-                relative flex-shrink-0 ml-3 rounded-full
-                transition-colors duration-200
+                relative flex-shrink-0 ml-3 rounded-full transition-colors duration-300 ease-in-out
                 ${preservesPitch ? "bg-muted" : "bg-primary"}
               `}
-              style={{ width: "2rem", height: "1.1rem" }}
+              style={{ width: "2.25rem", height: "1.25rem" }}
             >
               <div
                 className={`
-                  absolute top-0.5 w-3 h-3 rounded-full bg-white shadow
-                  transition-transform duration-200
-                  ${preservesPitch ? "translate-x-0.5" : "translate-x-3.5"}
+                  absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm
+                  transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]
+                  ${preservesPitch ? "left-0.5" : "left-[1.25rem]"}
                 `}
               />
             </div>
@@ -191,7 +188,7 @@ function SeekBar() {
 }
 
 export function MiniPlayer() {
-  const { currentTrack, isPlaying, togglePlay, playNext, playPrevious, audioError } = usePlayer();
+  const { currentTrack, isPlaying, togglePlay, playNext, playPrevious, audioError, currentTime, duration, seek } = usePlayer();
   const [showSettings, setShowSettings] = useState(false);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -230,34 +227,35 @@ export function MiniPlayer() {
           {/* Spacer to balance settings */}
           <div className="flex-1" />
 
-          {/* Center: prev, play, next */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Center: prev, play, next + 10s seek */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+
+            {/* Tombol Mundur 10 Detik */}
+            <button
+              onClick={() => seek(Math.max(0, currentTime - 10))}
+              disabled={!!audioError}
+              className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground flex items-center justify-center press-scale hover:bg-white/10 disabled:opacity-40"
+              aria-label="Rewind 10 seconds"
+            >
+              <RotateCcw size={16} />
+            </button>
+
+            {/* Tombol Sebelumnya */}
             <button
               onClick={playPrevious}
               disabled={!!audioError}
-              className="
-                w-9 h-9 rounded-full
-                text-muted-foreground hover:text-foreground
-                flex items-center justify-center
-                press-scale hover:opacity-90
-                disabled:opacity-40
-              "
+              className="w-9 h-9 rounded-full text-muted-foreground hover:text-foreground flex items-center justify-center press-scale hover:opacity-90 disabled:opacity-40"
               aria-label="Previous track"
             >
               <SkipBack size={18} />
             </button>
 
+            {/* Tombol Play/Pause */}
             <button
               onClick={togglePlay}
               data-testid="button-play-pause"
               disabled={!!audioError}
-              className="
-                w-10 h-10 rounded-full
-                bg-primary text-primary-foreground
-                flex items-center justify-center
-                press-scale hover:opacity-90 shadow-md
-                disabled:opacity-40
-              "
+              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center press-scale hover:opacity-90 shadow-md disabled:opacity-40"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
@@ -267,19 +265,24 @@ export function MiniPlayer() {
               )}
             </button>
 
+            {/* Tombol Berikutnya */}
             <button
               onClick={playNext}
               disabled={!!audioError}
-              className="
-                w-9 h-9 rounded-full
-                text-muted-foreground hover:text-foreground
-                flex items-center justify-center
-                press-scale hover:opacity-90
-                disabled:opacity-40
-              "
+              className="w-9 h-9 rounded-full text-muted-foreground hover:text-foreground flex items-center justify-center press-scale hover:opacity-90 disabled:opacity-40"
               aria-label="Next track"
             >
               <SkipForward size={18} />
+            </button>
+
+            {/* Tombol Maju 10 Detik */}
+            <button
+              onClick={() => seek(Math.min(duration, currentTime + 10))}
+              disabled={!!audioError}
+              className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground flex items-center justify-center press-scale hover:bg-white/10 disabled:opacity-40"
+              aria-label="Forward 10 seconds"
+            >
+              <RotateCw size={16} />
             </button>
           </div>
 

@@ -4,6 +4,8 @@ import { FolderImport } from "@/components/FolderImport";
 import { FolderList } from "@/components/FolderList";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { usePlayer } from "@/context/PlayerContext";
+import { GradientText } from "@/components/animate-ui/components/ShinyText";
+import { motion } from "framer-motion";
 
 export function Home() {
   const { currentTrack } = usePlayer();
@@ -21,17 +23,20 @@ export function Home() {
         {/* Header */}
         <header className="flex items-center justify-between px-5 pt-6 pb-4">
           <div className="flex items-center gap-2.5">
-            <img
-              src={`${import.meta.env.BASE_URL}favicon.svg`}
-              alt=""
-              className="w-6 h-6"
-              style={{ filter: "drop-shadow(0 0 4px rgba(150,102,227,0.4))" }}
-            />
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                Dengerin
-              </h1>
+            {/* LOGO DENGAN GRADIENT */}
+            <div style={{ filter: "drop-shadow(0 0 4px rgba(150,102,227,0.4))" }}>
+              <GradientText 
+                iconUrl={`${import.meta.env.BASE_URL}favicon.svg`} 
+                animationSpeed={6}
+              />
             </div>
+
+            {/* TEKS DENGAN GRADIENT */}
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">
+              <GradientText animationSpeed={6}>
+                Dengerin
+              </GradientText>
+            </h1>
           </div>
           <ThemeToggle />
         </header>
