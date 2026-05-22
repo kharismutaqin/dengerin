@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Plus, FolderOpen } from "lucide-react";
+import { Loader2, FolderSymlink, ClipboardPaste } from "lucide-react";
 import { parseFolderId, fetchFolderContents } from "@/lib/googleDrive";
 import { usePlayer, type Folder, type Track } from "@/context/PlayerContext";
 
@@ -12,7 +12,7 @@ export function FolderImport() {
   const handleFetch = async () => {
     const folderId = parseFolderId(link);
     if (!folderId) {
-      setError("Could not parse a folder ID from that link. Please paste a Google Drive folder URL.");
+      setError("Maaf, link-nya salah.");
       return;
     }
     setError(null);
@@ -20,7 +20,7 @@ export function FolderImport() {
     try {
       const result = await fetchFolderContents(folderId);
       if (result.files.length === 0) {
-        setError("No audio files found in this folder. Make sure the folder is public and contains audio files.");
+        setError("Pastikan akses foldernya sudah publik ya.");
         setLoading(false);
         return;
       }
@@ -41,7 +41,7 @@ export function FolderImport() {
       addFolder(folder);
       setLink("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to fetch folder.";
+      const msg = err instanceof Error ? err.message : "Gagal memuat folder.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export function FolderImport() {
     <div className="w-full" data-testid="folder-import">
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <FolderOpen
+          <ClipboardPaste
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
             size={16}
           />
@@ -97,7 +97,7 @@ export function FolderImport() {
           {loading ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
-            <Plus size={16} />
+            <FolderSymlink size={16} />
           )}
           <span className="hidden sm:inline">{loading ? "Loading…" : "Add"}</span>
         </button>

@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "azdHm4suNUN48rwgRV_Dj"
+uri = "file://artifacts/music-player/public/opengraph.jpg"
+type = "image"
+title = "Generated OG Image (1200x630)"

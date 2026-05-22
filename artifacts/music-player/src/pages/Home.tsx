@@ -29,7 +29,7 @@ export function Home() {
             />
             <div>
               <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                G Player
+                Dengerin
               </h1>
             </div>
           </div>
